@@ -1,17 +1,13 @@
-# Use Java 23
-FROM eclipse-temurin:23-jdk
-
-# Set working directory
+FROM eclipse-temurin:23-jdk AS build
 WORKDIR /app
-
-# Copy project
 COPY . .
 
-# Build Spring Boot JAR
-RUN ./mvnw clean package -DskipTests || mvn -B clean package -DskipTests
+# Important fix:
+RUN chmod +x mvnw
 
-# Expose port (Spring Boot default)
-EXPOSE 8080
+RUN ./mvnw clean package -DskipTests
 
-# Run the JAR file
-CMD ["sh", "-c", "java -jar target/*.jar"]
+FROM eclipse-temurin:23-jre
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
